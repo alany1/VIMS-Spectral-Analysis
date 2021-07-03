@@ -1,0 +1,9 @@
+import numpy as np
+from matplotlib import pyplot as plt
+import scipy.optimize as sco
+
+
+vims_wave = np.loadtxt('/home/alanyu/Dropbox (MIT)/VIMS_UROP/vims_wave.txt')
+
+def gaussian(x,mean,sigma,A):    
+    return A*np.exp(-((x-mean)**2.)/(2.*sigma**2))
