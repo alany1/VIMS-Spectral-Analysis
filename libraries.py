@@ -15,3 +15,5 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm
 from scipy.special import wofz
 from astropy.time import Time
+from scipy import pi,sqrt,exp
+from scipy.special import erf

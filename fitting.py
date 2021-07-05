@@ -13,70 +13,65 @@ def import_pickle(*file_lists):
     print("DONE")
     return data
 
+belet = glob.glob("new_pixels/belet/*.pkl")
+senkyo = glob.glob("new_pixels/senkyo/*.pkl")
+shangrai = glob.glob("new_pixels/shangrai/*.pkl")
 data = import_pickle(belet,senkyo,shangrai)
 
-def fit(info):
+def fit(spectra, use_powerlaw):
     """
-    info: spectrum list.
-    
+    Parameters:
+        spectra [list]: list of spectra values
+        use_powerlaw [boolean]: True if using powerlaw adjustment, False otherwise 
+
     Returns: Parameters of fitting routine as a dictionary of dictionaries.
     """
-    band_channels = [29,30,31,32,47,48,49,50,51,52,53,54,55,84,85,86,87,88,89,90]# + [i for i in range(160,181)] 
-    plaw = False
-    
-    fits = {'1.0':{},'1.2':{},'1.6':{},'2.0':{}}
-    
-    #attempt to fit powerlaw:
-    try:
-        p_fit,p_cov = sco.curve_fit(powerlaw,vims_wave[band_channels],info[band_channels],p0=(0.005,-2,0),maxfev=100000)
-        p=powerlaw(vims_wave,*p_fit)
-        adjusted = info-p
-        plaw=True
-    except:
-        adjusted = info
-    
-    #2.0:
-    try:
-        fit,cov=sco.curve_fit(gaussian,vims_wave[60:85],adjusted[60:85],p0=(2.0,.125,.1),maxfev=100000)
-        if plaw:
-            fits['2.0']={'p_amp': p_fit[0],'p_power': p_fit[1],'p_const': p_fit[2],'g_mean':fit[0],'g_sigma': fit[1],'g_amp':fit[2]} 
-        else:
-            fits['2.0']={'g_mean':fit[0],'g_sigma': fit[1],'g_amp':fit[2]} 
-    except:
+
+    if np.max(spectra) < .0001:
         return {}
     
-    #1.6:
-    try:
-        fit,cov=sco.curve_fit(gaussian,vims_wave[35:54],adjusted[35:54],p0=(1.6,.125,.1),maxfev=100000)
-        if plaw:
-            fits['1.6'] = {'p_amp': p_fit[0],'p_power': p_fit[1],'p_const': p_fit[2],'g_mean':fit[0],'g_sigma': fit[1],'g_amp':fit[2]}
-        else:
-            fits['1.6']={'g_mean':fit[0],'g_sigma': fit[1],'g_amp':fit[2]} 
-    except:
-        return {}
+    band_channels = [29,30,31,32,47,48,49,50,51,52,53,54,55,84,85,86,87,88,89,90]
     
-    #1.2:
-    try:
-        fit,cov=sco.curve_fit(gaussian,vims_wave[12:30],adjusted[12:30],p0=(1.2,.125,.1),maxfev=100000)
-        if plaw:
-            fits['1.2'] = {'p_amp': p_fit[0],'p_power': p_fit[1],'p_const': p_fit[2],'g_mean':fit[0],'g_sigma': fit[1],'g_amp':fit[2]}
-        else:
-            fits['1.2']={'g_mean':fit[0],'g_sigma': fit[1],'g_amp':fit[2]} 
-    except:
-        return {}
     
-    try:
-        fit,cov=sco.curve_fit(gaussian,vims_wave[:18],adjusted[:18],p0=(1.0,.125,.1),maxfev=100000)
-        if plaw:
-            fits['1.0'] = {'p_amp': p_fit[0],'p_power': p_fit[1],'p_const': p_fit[2],'g_mean':fit[0],'g_sigma': fit[1],'g_amp':fit[2]}
-        else:
-            fits['1.0']={'g_mean':fit[0],'g_sigma': fit[1],'g_amp':fit[2]} 
-    except:
-        return {}
-    
-    fits['2.0']['channel']=info[69]
-    fits['1.0']['channel']=info[8]
-    fits['1.2']['channel']=info[20]
-    fits['1.6']['channel']=info[45]
-    
-    return fits
+    fit_windows = {'1.2':(15,28), '1.6':(32,55),'2.0':(60,85),'1.0':(7,18)}
+    initial = {'1.2': {'gaussian': (1.2,.1,.1), 'skew': (.01,1.2,.1,-1)},\
+               '1.6': {'gaussian': (1.6,.1,.1), 'skew': (.01,1.6,.1,-1)},\
+               '1.0': {'gaussian': (1.0,.1,.1), 'skew': (.01,1.0,.1,-1)},\
+               '2.0': {'gaussian': (2.0,.1,.1), 'skew': (.01,2.0,.1,-1)}}
+
+    result = {window: {} for window in fit_windows}
+
+    if use_powerlaw:
+        try:
+            p_fit, cov = sco.curve_fit(powerlaw_no_constant, vims_wave[band_channels], spectra[band_channels], p0 = (1, -2), maxfev = 7500)
+            p = powerlaw_no_constant(vims_wave, *p_fit)
+            spectra = spectra - p
+            result['powerlaw'] = {'scale': p_fit[0], 'exponent': p_fit[1]}
+
+        except:
+            pass
+        
+        
+    for window in fit_windows:
+        lower, upper = fit_windows[window]
+
+        try:
+            gaussian_fit, cov = sco.curve_fit(gaussian, vims_wave[lower:upper], spectra[lower:upper], p0 = initial[window]['gaussian'], maxfev = 7500)
+
+            skew_fit, cov = sco.curve_fit(skew, vims_wave[lower:upper], spectra[lower:upper], p0 = initial[window]['skew'], maxfev = 7500)
+
+            result[window]['gaussian'] = {'mean': gaussian_fit[0], 'sigma': gaussian_fit[1], 'amp': gaussian_fit[2]}
+            result[window]['skew'] = {'A': skew_fit[0], 'e': skew_fit[1], 'w': skew_fit[2], 'a': skew_fit[3]}
+
+            skew_list = skew(vims_wave[lower:upper], *skew_fit)
+            ind = np.argmax(skew_list)
+            result[window]['skew']['peak_channel'] = vims_wave[lower + ind]
+            result[window]['skew']['peak_value'] = skew_list[ind]
+
+            ind = np.argmax(spectra[lower:upper])
+            result[window]['raw_peak_channel'] = vims_wave[lower + ind]
+            result[window]['raw_peak_value'] = spectra[lower:upper][ind]                                                               
+
+        except:
+            return {}
+    return result

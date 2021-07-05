@@ -6,3 +6,7 @@ __pycache__/
 data/
 pixel_csvs/
 dune_shape_files/
+new_pixels/
+belet_pixels.csv
+shangrai_pixels.csv
+senkyo_pixels.csv
