@@ -45,3 +45,77 @@ def fit_test(i, data, function, initial_guesses, window = '2.0'):
     plt.legend()
     print(f"Powerlaw: {p_fit} \n Gaussian: {g_fit} \n Powerlaw Gaussian: {gp_fit} \n Function: {f_fit} \n Powerlaw Function {fp_fit}")
 
+
+_params = {'stefan_fit': {'1.0': {'gaussian': {'mean': (0.9,1.1)}, 'skew': {'peak_channel': (0.9, 1.1)}},
+                         '1.2': {'gaussian': {'mean': (1.1, 1.3)}, 'skew': {'peak_channel': (1.1, 1.3)}},
+                         '1.6': {'gaussian': {'mean': (1.5, 1.8)}, 'skew': {'peak_channel': (1.5, 1.8)}},
+                          '2.0': {'gaussian': {'mean': (1.9, 2.2)}, 'skew': {'peak_channel': (1.9, 2.2)}}},
+          'regular_fit': {'1.0': {'gaussian': {'mean': (0.9,1.1)}, 'skew': {'peak_channel': (0.9, 1.1)}},
+                         '1.2': {'gaussian': {'mean': (1.1, 1.3)}, 'skew': {'peak_channel': (1.1, 1.3)}},
+                         '1.6': {'gaussian': {'mean': (1.5, 1.8)}, 'skew': {'peak_channel': (1.5, 1.8)}},
+                         '2.0': {'gaussian': {'mean': (1.9, 2.2)}, 'skew': {'peak_channel': (1.9, 2.2)}}}}
+
+def filter_data(data, params = _params):
+    filtered = []
+    sample = False
+    for i, entry in enumerate(data):
+
+        if not entry['stefan_fit'] or not entry[ 'regular_fit']:
+            continue
+
+        violate = False
+
+        for fit_type in params:
+            for channel in params[fit_type]:
+                for fn in params[fit_type][channel]:
+                    for criteria in params[fit_type][channel][fn]:
+                        low, high = params[fit_type][channel][fn][criteria]
+                        if not low < entry[fit_type][channel][fn][criteria] < high:
+                            violate = True
+
+        if violate:
+            if not sample:
+                print(entry, i)
+                sample = True
+            continue
+
+        filtered.append(entry)
+
+    print(f"Total {len(data) - len(filtered)} entries removed")
+    
+    return filtered
+
+def time_bucket(data, num_buckets = 20):
+    """
+    Data: list of spectra dictionaries
+    
+    Returns: Returns num_buckets lists containing spectra from each time bucket.
+    """
+    #REASONABLE_AMPLITUDES = (0,0.1)
+    
+    min_time, max_time = min(data, key = lambda x: x['ettime'])['ettime'],max(data, key = lambda x: x['ettime'])['ettime']
+    
+    bucket_length = (max_time - min_time) / num_buckets
+    
+    low = min_time
+    up = max_time
+    
+    buckets = {}
+    
+    
+    for i in range(num_buckets):
+        up = bucket_length+low
+        buckets[(low,up)] = []
+        low = up
+    
+    
+    for i,spec in enumerate(data):
+        #if i%10000 == 0: print('Progress', i+1)
+        for low,high in buckets:
+            #insert cuts here if needed
+            if spec['ettime'] <= high and spec['ettime'] >= low:
+                buckets[(low,high)].append(spec)
+                break
+                
+    return buckets
+        
