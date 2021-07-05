@@ -118,4 +118,8 @@ def time_bucket(data, num_buckets = 20):
                 break
                 
     return buckets
-        
+
+def viewing_geometry(data, incidence_range = (-float('inf'), float(inf)), emission_range=(-float('inf'), float('inf')), phase_range= (-float('inf'), float(inf))):
+    return list(filter(lambda e: incidence_range[0] < e['incidence'] < incidence_range[1] and
+                       emission_range[0] < e['emission'] < emission_range[1] and
+                       phase_range[0] < e['phase'] < phase_range[1], data))
