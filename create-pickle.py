@@ -52,15 +52,12 @@ def parse_csv(path_to_csv):
 
             entry_dict['stefan_spectrum'] = entry_dict['spectrum']/F(np.radians(entry_dict['incidence']),np.radians(entry_dict['emission']),np.radians(entry_dict['phase']))
 
-            
+            entry_dict['stefan-plaw_fit'] = fit(entry_dict['stefan_spectrum'], True)
             
             entry_dict['stefan_fit'] = fit(entry_dict['stefan_spectrum'], False)
 
-            
             entry_dict['regular_fit'] = fit(entry_dict['spectrum'], True)
 
-            
-            
             #data.append(entry_dict)
 
             cube_name = entry_dict['name'].split('.cub')[0]
