@@ -63,11 +63,17 @@ def fit(spectra, use_powerlaw):
             result[window]['gaussian'] = {'mean': gaussian_fit[0], 'sigma': gaussian_fit[1], 'amp': gaussian_fit[2]}
             result[window]['skew'] = {'A': skew_fit[0], 'e': skew_fit[1], 'w': skew_fit[2], 'a': skew_fit[3]}
 
+            
             skew_list = skew(vims_wave[lower:upper], *skew_fit)
             ind = np.argmax(skew_list)
+            extended_domain = np.linspace(vims_wave[lower], vims_wave[upper], 10000)
+            skew_list_extended = skew(extended_domain, *skew_fit)
+            
             result[window]['skew']['peak_channel'] = vims_wave[lower + ind]
             result[window]['skew']['peak_value'] = skew_list[ind]
-
+            result[window]['skew']['peak_channel_inferred'] = extended_domain[np.argmax(skew_list_extended)]
+            result[window]['skew']['peak_value_inferred'] = skew(result[window]['skew']['peak_channel_inferred'], *skew_fit)
+                
             ind = np.argmax(spectra[lower:upper])
             result[window]['raw_peak_channel'] = vims_wave[lower + ind]
             result[window]['raw_peak_value'] = spectra[lower:upper][ind]                                                               
