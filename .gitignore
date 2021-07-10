@@ -13,3 +13,5 @@ senkyo_pixels.csv
 cube_info/
 plots/
 old_notebooks/
+.ipynb_checkpoints/
+__pycache__/
