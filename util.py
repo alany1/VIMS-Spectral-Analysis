@@ -45,22 +45,27 @@ def fit_test(i, data, function, initial_guesses, window = '2.0'):
     plt.legend()
     print(f"Powerlaw: {p_fit} \n Gaussian: {g_fit} \n Powerlaw Gaussian: {gp_fit} \n Function: {f_fit} \n Powerlaw Function {fp_fit}")
 
+reasonable_output = {'1.0': {'gaussian': {'mean': (0.9,1.1)}, 'skew': {'peak_channel': (0.9, 1.1)}},
+                         '1.2': {'gaussian': {'mean': (1.1, 1.3)}, 'skew': {'peak_channel': (1.1, 1.3)}},
+                         '1.6': {'gaussian': {'mean': (1.5, 1.8)}, 'skew': {'peak_channel': (1.5, 1.8)}},
+                          '2.0': {'gaussian': {'mean': (1.9, 2.2)}, 'skew': {'peak_channel': (1.9, 2.2)}}}
 
-_params = {'stefan_fit': {'1.0': {'gaussian': {'mean': (0.9,1.1)}, 'skew': {'peak_channel': (0.9, 1.1)}},
-                         '1.2': {'gaussian': {'mean': (1.1, 1.3)}, 'skew': {'peak_channel': (1.1, 1.3)}},
-                         '1.6': {'gaussian': {'mean': (1.5, 1.8)}, 'skew': {'peak_channel': (1.5, 1.8)}},
-                          '2.0': {'gaussian': {'mean': (1.9, 2.2)}, 'skew': {'peak_channel': (1.9, 2.2)}}},
-          'regular_fit': {'1.0': {'gaussian': {'mean': (0.9,1.1)}, 'skew': {'peak_channel': (0.9, 1.1)}},
-                         '1.2': {'gaussian': {'mean': (1.1, 1.3)}, 'skew': {'peak_channel': (1.1, 1.3)}},
-                         '1.6': {'gaussian': {'mean': (1.5, 1.8)}, 'skew': {'peak_channel': (1.5, 1.8)}},
-                         '2.0': {'gaussian': {'mean': (1.9, 2.2)}, 'skew': {'peak_channel': (1.9, 2.2)}}}}
+_params = {'stefan_fit': reasonable_output, 'regular_fit': reasonable_output, 'stefan-plaw_fit': reasonable_output}
+# _params = {'stefan_fit': {'1.0': {'gaussian': {'mean': (0.9,1.1)}, 'skew': {'peak_channel': (0.9, 1.1)}},
+#                          '1.2': {'gaussian': {'mean': (1.1, 1.3)}, 'skew': {'peak_channel': (1.1, 1.3)}},
+#                          '1.6': {'gaussian': {'mean': (1.5, 1.8)}, 'skew': {'peak_channel': (1.5, 1.8)}},
+#                           '2.0': {'gaussian': {'mean': (1.9, 2.2)}, 'skew': {'peak_channel': (1.9, 2.2)}}},
+#           'regular_fit': {'1.0': {'gaussian': {'mean': (0.9,1.1)}, 'skew': {'peak_channel': (0.9, 1.1)}},
+#                          '1.2': {'gaussian': {'mean': (1.1, 1.3)}, 'skew': {'peak_channel': (1.1, 1.3)}},
+#                          '1.6': {'gaussian': {'mean': (1.5, 1.8)}, 'skew': {'peak_channel': (1.5, 1.8)}},
+#                          '2.0': {'gaussian': {'mean': (1.9, 2.2)}, 'skew': {'peak_channel': (1.9, 2.2)}}}}
 
 def filter_data(data, params = _params):
     filtered = []
     sample = False
     for i, entry in enumerate(data):
 
-        if not entry['stefan_fit'] or not entry[ 'regular_fit']:
+        if not entry['stefan_fit'] or not entry[ 'regular_fit'] or not entry['stefan-plaw_fit']:
             continue
 
         violate = False
