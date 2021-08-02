@@ -20,6 +20,29 @@ data = import_pickle(belet,senkyo,shangrai)
 
 fit_windows = {'1.2':(15,28), '1.6':(32,55),'2.0':(60,85),'1.0':(7,18)}
 
+def examine_bump(spectra, START_0 = 70, START_f = 72, END_0 = 77, END_f = 79): 
+
+    if np.max(spectra) < .0001:
+        return {}
+
+    bump_info = {}
+
+    p = np.polyfit(np.append(vims_wave[START_0:START_f], vims_wave[END_0: END_f]),
+                   np.append(spectra[START_0:START_f], spectra[END_0: END_f]), 1)
+
+    fit = np.polyval(p, vims_wave[START_0:END_f])
+
+    bump = spectra[START_0:END_f] - fit
+
+    bump_info['bump'] = bump
+    bump_info['bump_max'] = np.max(bump)
+    bump_info['polyfit'] = p
+    bump_info['bump_max_channel'] = np.argmax(bump) + START_0
+
+    
+    return bump_info
+
+    
 def fit(spectra, use_powerlaw, fit_windows = fit_windows):
     """
     Parameters:
