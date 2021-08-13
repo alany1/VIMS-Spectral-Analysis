@@ -60,7 +60,7 @@ _params = {'stefan_fit': reasonable_output, 'regular_fit': reasonable_output, 's
 #                          '1.6': {'gaussian': {'mean': (1.5, 1.8)}, 'skew': {'peak_channel': (1.5, 1.8)}},
 #                          '2.0': {'gaussian': {'mean': (1.9, 2.2)}, 'skew': {'peak_channel': (1.9, 2.2)}}}}
 
-def filter_data(data, params = _params):
+def filter_data(data, params = _params, spectra_bounds = (-0.1, 1)):
     filtered = []
     sample = False
     for i, entry in enumerate(data):
@@ -70,6 +70,9 @@ def filter_data(data, params = _params):
 
         violate = False
 
+        if np.max(entry['spectrum']) > spectra_bounds[1] or np.min(entry['spectrum']) < spectra_bounds[0]:
+            continue
+        
         for fit_type in params:
             for channel in params[fit_type]:
                 for fn in params[fit_type][channel]:
